@@ -1,1 +1,10 @@
 @import "tailwindcss";
+
+@theme {
+    --color-bg-primary: white;
+}
+
+.container {
+    width: 100%;
+    max-width: 1340px;
+}
