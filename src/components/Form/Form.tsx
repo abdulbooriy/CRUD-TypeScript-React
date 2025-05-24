@@ -1,41 +1,58 @@
-import React, { useState, type ChangeEvent, type FormEvent } from "react";
+import React, {
+  useEffect,
+  useState,
+  type ChangeEvent,
+  type FormEvent,
+} from "react";
 import { Button, Form, Input, Typography } from "antd";
 import type { ICountry } from "../../shared/types";
+import Country from "../Country/Country";
+import { api } from "../../api";
 
 const { Title } = Typography;
 
-const initialState: ICountry = {
+export const initialState: ICountry = {
   id: "",
   country_name: "",
   city_name: "",
+  image: "",
 };
 
 const CountryForm = () => {
   const [formData, setFormData] = useState<ICountry>(initialState);
+  const [data, setData] = useState<ICountry[]>([]);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((p) => ({ ...p, [name]: value }));
   };
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
-    let newCountry = {
-      ...formData,
-      id: String(new Date().getTime()),
-    };
-    setFormData(newCountry);
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    
+    formData.id = String(new Date().getTime());
+    setData(prev => ([...prev, formData]));
   };
+
+  useEffect(() => {
+    api
+      .post("/countries", {
+        data,
+      })
+      .then((res) => setData(res.data))
+      .catch((error) => console.log(error))
+      .finally(() => {});
+  }, []);
+
+  console.log(data);
 
   return (
-    <div className="flex justify-center pt-20">
+    <div className="flex flex-col items-center pt-20">
       <div className="max-w-[450px] w-full border border-gray-300 rounded-lg p-4">
         <Title className="text-center pb-5" level={3}>
           Create Countries
         </Title>
         <Form
-          className=""
           name="basic"
           initialValues={{ remember: true }}
           autoComplete="off"
@@ -48,6 +65,7 @@ const CountryForm = () => {
             <Input
               className="text-black h-12"
               placeholder="Enter Country Name"
+              name="country_name"
               value={formData.country_name}
               onChange={handleChange}
             />
@@ -60,8 +78,31 @@ const CountryForm = () => {
             <Input
               className="text-black h-12"
               placeholder="Enter City Name"
+              name="city_name"
               value={formData.city_name}
               onChange={handleChange}
+            />
+          </Form.Item>
+
+          <Form.Item<ICountry>
+            label="Image"
+            name="image"
+            rules={[
+              { required: true, message: "Please input Country Image!" },
+            ]}>
+            <Input
+              className="text-black h-12"
+              placeholder="Enter Country Image"
+              type="file"
+              name="image"
+              value={formData.image}
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  const imageUrl = URL.createObjectURL(file);
+                  setFormData((prev) => ({ ...prev, image: imageUrl }));
+                }
+              }}
             />
           </Form.Item>
 
@@ -75,6 +116,9 @@ const CountryForm = () => {
             </Button>
           </Form.Item>
         </Form>
+      </div>
+      <div>
+        <Country data={data} />
       </div>
     </div>
   );
