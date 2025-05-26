@@ -1,4 +1,4 @@
-import React from "react";
+import { memo } from "react";
 import country__logo from "../../assets/icons/countries.svg";
 
 const Header = () => {
@@ -22,4 +22,4 @@ const Header = () => {
   );
 };
 
-export default React.memo(Header);
+export default memo(Header);

@@ -1,13 +1,8 @@
-import React, {
-  useEffect,
-  useState,
-  type ChangeEvent,
-  type FormEvent,
-} from "react";
+import { useState, type ChangeEvent, type FormEvent, memo } from "react";
 import { Button, Form, Input, Typography } from "antd";
 import type { ICountry } from "../../shared/types";
-import Country from "../Country/Country";
 import { api } from "../../api";
+import toast from "react-hot-toast";
 
 const { Title } = Typography;
 
@@ -18,9 +13,8 @@ export const initialState: ICountry = {
   image: "",
 };
 
-const CountryForm = () => {
+const CountryForm = ({ onSuccess }: { onSuccess: () => void }) => {
   const [formData, setFormData] = useState<ICountry>(initialState);
-  const [data, setData] = useState<ICountry[]>([]);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -29,38 +23,32 @@ const CountryForm = () => {
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    
-    formData.id = String(new Date().getTime());
-    setData(prev => ([...prev, formData]));
-  };
 
-  useEffect(() => {
     api
-      .post("/countries", {
-        data,
+      .post("/countries", formData)
+      .then(() => {
+        toast.success("Country is successfully created !");
+        setFormData(initialState);
+        onSuccess();
       })
-      .then((res) => setData(res.data))
-      .catch((error) => console.log(error))
-      .finally(() => {});
-  }, []);
-
-  console.log(data);
+      .catch((error) => {
+        console.log(error);
+      });
+  };
 
   return (
     <div className="flex flex-col items-center pt-20">
-      <div className="max-w-[450px] w-full border border-gray-300 rounded-lg p-4">
+      <div className="max-w-[450px] w-full border border-gray-400 rounded-lg p-4">
         <Title className="text-center pb-5" level={3}>
           Create Countries
         </Title>
         <Form
           name="basic"
-          initialValues={{ remember: true }}
           autoComplete="off"
           layout="vertical"
           onSubmitCapture={handleSubmit}>
           <Form.Item<ICountry>
             label="CountryName"
-            name="country_name"
             rules={[{ required: true, message: "Please input CountryName!" }]}>
             <Input
               className="text-black h-12"
@@ -73,7 +61,6 @@ const CountryForm = () => {
 
           <Form.Item<ICountry>
             label="CityName"
-            name="city_name"
             rules={[{ required: true, message: "Please input CityName!" }]}>
             <Input
               className="text-black h-12"
@@ -84,44 +71,24 @@ const CountryForm = () => {
             />
           </Form.Item>
 
-          <Form.Item<ICountry>
-            label="Image"
-            name="image"
-            rules={[
-              { required: true, message: "Please input Country Image!" },
-            ]}>
-            <Input
-              className="text-black h-12"
-              placeholder="Enter Country Image"
-              type="file"
-              name="image"
-              value={formData.image}
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) {
-                  const imageUrl = URL.createObjectURL(file);
-                  setFormData((prev) => ({ ...prev, image: imageUrl }));
-                }
-              }}
-            />
-          </Form.Item>
-
           <Form.Item label={null}>
             <Button
               type="primary"
               htmlType="submit"
               size="large"
-              className="w-full">
+              className="w-full"
+              style={{
+                height: "50px",
+                fontFamily: "sans-serif",
+                fontWeight: "bolder",
+              }}>
               + Add a new Country
             </Button>
           </Form.Item>
         </Form>
       </div>
-      <div>
-        <Country data={data} />
-      </div>
     </div>
   );
 };
 
-export default React.memo(CountryForm);
+export default memo(CountryForm);
